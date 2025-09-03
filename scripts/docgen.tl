@@ -83,31 +83,55 @@ local function insert_into(
    end
 end
 
+local function one_based_start_point(n: ts.Node): ts.Point
+   local point <const> = n:start_point()
+   point.row = point.row + 1
+   point.column = point.column + 1
+   return point
+end
+
 -- TODO: should probably just use the teal parser to pull out these type definitions
 local directives: {string:function(ts.Node, string, string)} = {
-   ["@teal-export"] = function(_n: ts.Node, content: string, _fname: string)
+   ["@teal-export"] = function(n: ts.Node, content: string, fname: string)
       local name <const>, typedef = content:match("%@teal%-export%s+(.-)%s*:%s*(.*)")
-      local doc_s <const>, doc_e <const> = typedef:find("%[%[.*%]%]")
+      local doc_s <const>, eq_s <const>, eq_e <const> = typedef:match("()%[()%=*()%[") as (integer, integer, integer)
       local documentation: string
       if doc_s then
-         documentation = trim(typedef:sub(doc_s+2, doc_e-2)):gsub("\n", "<br>")
+         local eq_count <const> = eq_e - eq_s
+         local equal_signs <const> = ("="):rep(eq_count)
+         local doc_e <const> = typedef:find("%]" .. equal_signs .. "%]")
+         local point <const> = one_based_start_point(n)
+         assert(doc_e, fname .. ":" .. point.row .. ":" .. point.column .. ": Unclosed documentation opening ‘[" .. equal_signs .. "[’")
+         documentation = trim(typedef:sub(doc_s + eq_count + 2, doc_e - 1)):gsub("\n", "<br>")
          typedef = typedef:sub(1, doc_s-1):gsub("%s*$", "")
+         documentation = #documentation > 0 and documentation or nil
+      end
+      if not documentation then
+         local point <const> = one_based_start_point(n)
+         io.stderr:write(fname, ":", point.row, ":", point.column, ": Exported item ‘", name, "’ has no documentation!\n")
       end
       typedef = typedef:gsub("%s*[*/]", "")
       if name then
          if documentation then
             insert_into(docs, name, "<" .. typedef .. ">" .. trim(documentation))
          end
-         --local c_src_start <const> = n:start_point()
-         typedef = typedef -- .. " -- " .. fname .. ":" .. math.floor(c_src_start.row)
+         typedef = typedef
          insert_into(records, name, typedef)
       end
    end,
 
-   ["@teal-inline"] = function(_n: ts.Node, content: string, _fname: string)
-      --local start <const> = n:start_point()
-      for inline_content in content:gmatch("@teal%-inline%s*%[%[(.-)%]%]") do
-         ti(inlines, (inline_content:gsub("%s*$", ""))) -- .. " -- " .. fname .. ":" .. math.floor(start.row))
+   ["@teal-inline"] = function(n: ts.Node, content: string, fname: string)
+      local point <const> = one_based_start_point(n)
+      local index = 1
+      while index < #content do
+         local _, inline_content_s <const>, eq_s <const>, eq_e <const> = content:find("@teal%-inline%s*%[()=*()%[", index)
+         if not inline_content_s then break end
+         local equal_signs = ("="):rep(eq_e - eq_s)
+         local inline_content_e <const>, next_index <const> = content:find("()]" .. equal_signs .. "]()", inline_content_s + 1)
+         assert(inline_content_e, fname .. ":" .. point.row .. ":" .. point.column .. ": Unclosed teal-inline opening ‘[" .. equal_signs .. "[’")
+         local inline_content <const> = content:sub(inline_content_s + 1, inline_content_e - 1):gsub("%s*$", "")
+         ti(inlines, inline_content)
+         index = next_index
       end
    end,
 
@@ -174,7 +198,7 @@ local function generate_record_defs(defs: {NamedRecordDef}, indent: integer)
       else
          ti(output, def.name)
          ti(output, ": ")
-         ti(output, def.def as string)
+         ti(output, rec_def)
          ti(output, "\n")
       end
    end
