@@ -355,7 +355,7 @@ static void query_cursor_set_range(lua_State *L, TSQueryCursor *c) {
 	}
 }
 
-/* @teal-export Query.match: function(Query, Node, predicates?: {string:Predicate}, start?: integer | Point, end_?: integer | Point): function(): Match [[
+/* @teal-export Query.match: function(Query, Node, predicates?: {string:Predicate}, start?: integer | Point, end_?: integer | Point): function(): Match [====[
    Iterate over the matches of a given query.
    <code>start</code> and <code>end</code> are optional.
    They must be passed together with the same type, describing either two bytes or two points.
@@ -395,8 +395,11 @@ static void query_cursor_set_range(lua_State *L, TSQueryCursor *c) {
 
    By default the following predicates are provided.
       <code> (#eq? ...) </code> will match if all arguments provided are equal
+      <code> (#not-eq? a b) </code> will match if the two arguments provided are not equal
       <code> (#match? text pattern) </code> will match the provided <code>text</code> matches the given <code>pattern</code>. Matches are determined by Lua's standard <code>string.match</code> function.
+      <code> (#not-match? text pattern) </code> inverse of <code>match?</code>
       <code> (#find? text substring) </code> will match if <code>text</code> contains <code>substring</code>. The substring is found with Lua's standard <code>string.find</code>, but the search always starts from the beginning, and pattern matching is disabled. This is equivalent to <code>string.find(text, substring, 0, true)</code>
+      <code> (#not-find? text substring) </code> inverse of <code>find?</code>
 
    Predicate evaluation order:
 
@@ -433,7 +436,7 @@ static void query_cursor_set_range(lua_State *L, TSQueryCursor *c) {
       print("   " .. match.captures["the-comment"])
    end
    </pre>
-]]*/
+]====]*/
 static int query_match_factory(lua_State *L) {
 	TSQuery *const q = *query_assert(L, 1);
 	TSNode n = *node_assert(L, 2);
@@ -604,6 +607,32 @@ static int eq_predicate(lua_State *L) {
 	return 1;
 }
 
+static int not_eq_predicate(lua_State *L) {
+	int const num_args = lua_gettop(L);
+	if (num_args != 2) {
+		luaL_error(L, "predicate not-eq? expects exactly 2 arguments, got %d", num_args);
+	}
+	MaybeOwnedString a;
+	if (!predicate_arg_to_string(L, 1, &a)) {
+		lua_pushboolean(L, false);
+		mos_free(&a);
+		return 1;
+	}
+	MaybeOwnedString b;
+	if (!predicate_arg_to_string(L, 2, &b)) {
+		lua_pushboolean(L, false);
+		mos_free(&a);
+		mos_free(&b);
+		return 1;
+	}
+
+	lua_pushboolean(L, !mos_eq(a, b));
+	mos_free(&a);
+	mos_free(&b);
+	return 1;
+}
+
+
 static inline void open_stringlib(lua_State *L) {
 #if LUA_VERSION_NUM <= 501
 	lua_getglobal(L, "string");
@@ -635,6 +664,18 @@ static int match_predicate(lua_State *L) {
 	return 1;
 }
 
+static int not_match_predicate(lua_State *L) {
+	int const num_args = lua_gettop(L);
+	if (num_args != 2) {
+		luaL_error(L, "predicate not-match? expects exactly 2 arguments, got %d", num_args);
+	}
+
+	match_predicate(L);
+	lua_pushboolean(L, !lua_toboolean(L, -1));
+
+	return 1;
+}
+
 static int find_predicate(lua_State *L) {
 	int const num_args = lua_gettop(L);
 	if (num_args != 2) {
@@ -656,6 +697,18 @@ static int find_predicate(lua_State *L) {
 	pushinteger(L, 0);        // string.find, string, pattern, 0
 	lua_pushboolean(L, true); // string.find, string, pattern, 0, true
 	lua_call(L, 4, 1);
+
+	return 1;
+}
+
+static int not_find_predicate(lua_State *L) {
+	int const num_args = lua_gettop(L);
+	if (num_args != 2) {
+		return luaL_error(L, "predicate not-find? expects exactly 2 arguments, got %d", num_args);
+	}
+
+	find_predicate(L);
+	lua_pushboolean(L, !lua_toboolean(L, -1));
 
 	return 1;
 }
@@ -765,8 +818,14 @@ static int predicates_for_pattern(lua_State *L) {
 
 static const luaL_Reg default_query_predicates[] = {
 	{"eq?", eq_predicate},
+	{"not-eq?", not_eq_predicate},
+
 	{"match?", match_predicate},
+	{"not-match?", not_match_predicate},
+
 	{"find?", find_predicate},
+	{"not-find?", not_find_predicate},
+
 	{NULL, NULL}};
 
 void query_setup_predicate_tables(lua_State *L) {
