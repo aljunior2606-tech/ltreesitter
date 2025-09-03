@@ -11,26 +11,40 @@ static int query_cursor_gc(lua_State *L) {
 	return 0;
 }
 
-/* @teal-export QueryCursor.did_exceed_match_limit: function(QueryCursor): boolean */
+/* @teal-export QueryCursor.did_exceed_match_limit: function(QueryCursor): boolean [[
+   Returns true if the given cursor exceeded its match limit. See
+   `set_match_limit` and `match_limit`
+]] */
 static int did_exceed_match_limit(lua_State *L) {
 	TSQueryCursor const *qc = *query_cursor_assert(L, 1);
 	lua_pushboolean(L, ts_query_cursor_did_exceed_match_limit(qc));
 	return 1;
 }
 
-/* @teal-export QueryCursor.match_limit: function(QueryCursor): integer */
+/* @teal-export QueryCursor.match_limit: function(QueryCursor): integer [[
+   Get the match limit of the given cursor. See `set_match_limit` and
+   `did_exceed_match_limit`
+]] */
 static int match_limit(lua_State *L) {
 	TSQueryCursor const *qc = *query_cursor_assert(L, 1);
 	lua_pushinteger(L, ts_query_cursor_match_limit(qc));
 	return 1;
 }
 
-/* @teal-export QueryCursor.set_match_limit: function(QueryCursor, integer) */
+/* @teal-export QueryCursor.set_match_limit: function(QueryCursor, integer) [[
+   Set the maximum number of in-progress matches allowed by this query cursor.
+
+   Set to nil to set to the maximum limit (2^32-1)
+]] */
 static int set_match_limit(lua_State *L) {
 	TSQueryCursor *qc = *query_cursor_assert(L, 1);
-	lua_Integer lim = luaL_checkinteger(L, 2);
-	luaL_argcheck(L, lim >= 0, 2, "expected a non-negative integer");
-	ts_query_cursor_set_match_limit(qc, (uint32_t)lim);
+	uint32_t limit = UINT32_MAX;
+	if (!lua_isnoneornil(L, 2)) {
+		lua_Integer lim = luaL_checkinteger(L, 2);
+		luaL_argcheck(L, lim >= 0, 2, "expected a non-negative integer");
+		limit = (uint32_t)lim;
+	}
+	ts_query_cursor_set_match_limit(qc, limit);
 	return 0;
 }
 
@@ -58,7 +72,11 @@ static int set_point_range(lua_State *L) {
 	return 1;
 }
 
-/* @teal-export QueryCursor.next_match_without_executing_predicates: function(QueryCursor): Match */
+/* @teal-export QueryCursor.next_match_without_executing_predicates: function(QueryCursor): Match [[
+   Find the next match of the given cursor. As implied by the name, this does
+   <em>NOT</em> execute any predicates. See `Query.predicates_for_pattern` or
+   `Query.match` for executing predicates.
+]] */
 static int next_match_without_executing_predicates(lua_State *L) {
 	lua_settop(L, 1);
 	luaL_checkstack(L, 5, "Internal allocation error");
@@ -80,7 +98,11 @@ static int next_match_without_executing_predicates(lua_State *L) {
 	return 1;
 }
 
-/* @teal-export QueryCursor.next_capture_without_executing_predicates: function(QueryCursor): Node, string */
+/* @teal-export QueryCursor.next_capture_without_executing_predicates: function(QueryCursor): Node, string [[
+   Find the next capture of the given cursor. As implied by the name, this does
+   <em>NOT</em> execute any predicates. See `Query.predicates_for_pattern` or
+   `Query.capture` for executing predicates.
+   ]] */
 static int next_capture_without_executing_predicates(lua_State *L) {
 	lua_settop(L, 1);
 	luaL_checkstack(L, 5, "Internal allocation error");
@@ -108,20 +130,30 @@ static int next_capture_without_executing_predicates(lua_State *L) {
 	return 2;
 }
 
-/* @teal-export QueryCursor.remove_match: function(QueryCursor, integer) */
+/* @teal-export QueryCursor.remove_match: function(QueryCursor, match_id: integer) [[
+   Prevent the given query cursor from matching the given match id
+]] */
 static int remove_match(lua_State *L) {
-	TSQueryCursor *qc = *query_cursor_assert(L, 1); // cursor
+	TSQueryCursor *qc = *query_cursor_assert(L, 1);
 	lua_Integer match_id = luaL_checkinteger(L, 2);
 	luaL_argcheck(L, match_id >= 0, 2, "expected a non-negative integer (a match id)");
 	ts_query_cursor_remove_match(qc, match_id);
 	return 0;
 }
 
-/* @teal-export QueryCursor.set_max_start_depth: function(QueryCursor, integer) */
+/* @teal-export QueryCursor.set_max_start_depth: function(QueryCursor, integer) [[
+   Set the maximum start depth of the given cursor. Set to nil to set the maximum.
+
+   This prevents cursors from exploring children nodes at a certain depth.
+]] */
 static int set_max_start_depth(lua_State *L) {
 	TSQueryCursor *qc = *query_cursor_assert(L, 1);
-	lua_Integer depth = luaL_checkinteger(L, 2);
-	luaL_argcheck(L, depth >= 0, 2, "expected a non-negative integer");
+	uint32_t depth = UINT32_MAX;
+	if (!lua_isnoneornil(L, 2)) {
+		lua_Integer arg = luaL_checkinteger(L, 2);
+		luaL_argcheck(L, arg >= 0, 2, "expected a non-negative integer");
+		depth = (uint32_t)arg;
+	}
 	ts_query_cursor_set_max_start_depth(qc, depth);
 	return 0;
 }

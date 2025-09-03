@@ -31,9 +31,17 @@ h2 {
 <td valign=top>
 <h4>ltreesitter</h4>
 <p>
+<a href="index.html#TREE_SITTER_LANGUAGE_VERSION">TREE_SITTER_LANGUAGE_VERSION</a>
+<br>
+<a href="index.html#TREE_SITTER_MIN_COMPATIBLE_LANGUAGE_VERSION">TREE_SITTER_MIN_COMPATIBLE_LANGUAGE_VERSION</a>
+<br>
 <a href="index.html#load">load</a>
 <br>
 <a href="index.html#require">require</a>
+<br>
+<a href="index.html#tree_sitter_version">tree_sitter_version</a>
+<br>
+<a href="index.html#version">version</a>
 <br>
 </p>
 <h4>Cursor</h4>
@@ -192,10 +200,26 @@ h2 {
 <br>
 <a href="index.html#Query.match">Query.match</a>
 <br>
+<a href="index.html#Query.predicates_for_pattern">Query.predicates_for_pattern</a>
+<br>
 </p>
 <h4>QueryCursor</h4>
 <p>
+<a href="index.html#QueryCursor.did_exceed_match_limit">QueryCursor.did_exceed_match_limit</a>
+<br>
+<a href="index.html#QueryCursor.match_limit">QueryCursor.match_limit</a>
+<br>
+<a href="index.html#QueryCursor.next_capture_without_executing_predicates">QueryCursor.next_capture_without_executing_predicates</a>
+<br>
+<a href="index.html#QueryCursor.next_match_without_executing_predicates">QueryCursor.next_match_without_executing_predicates</a>
+<br>
+<a href="index.html#QueryCursor.remove_match">QueryCursor.remove_match</a>
+<br>
 <a href="index.html#QueryCursor.set_byte_range">QueryCursor.set_byte_range</a>
+<br>
+<a href="index.html#QueryCursor.set_match_limit">QueryCursor.set_match_limit</a>
+<br>
+<a href="index.html#QueryCursor.set_max_start_depth">QueryCursor.set_max_start_depth</a>
 <br>
 <a href="index.html#QueryCursor.set_point_range">QueryCursor.set_point_range</a>
 <br>
@@ -214,10 +238,18 @@ h2 {
 <br>
 </p></td></tr></tbody></table>
 <br><br><br><br><br><br><br><br><br><br>
+<h2><a name="TREE_SITTER_LANGUAGE_VERSION"><code>TREE_SITTER_LANGUAGE_VERSION: integer</code></a></h2>
+<p>The current language ABI version supported by the used version of tree-sitte</p><br>
+<h2><a name="TREE_SITTER_MIN_COMPATIBLE_LANGUAGE_VERSION"><code>TREE_SITTER_MIN_COMPATIBLE_LANGUAGE_VERSION: integer</code></a></h2>
+<p>The minimum language ABI version supported by the used version of tree-sitte</p><br>
 <h2><a name="load"><code>load: function(file_name: string, language_name: string): Language, string</code></a></h2>
 <p>Load a language from a given file<br><br>   Keep in mind that this includes the <code>.so</code>, <code>.dll</code>, or <code>.dynlib</code> extension<br><br>   On Unix this uses dlopen, on Windows this uses LoadLibrary so if a path without a path separator is given, these functions have their own path's that they will search for your file in.<br>   So if in doubt use a file path like<br>   <pre><br>   local my_language = ltreesitter.load("./my_parser.so", "my_language")<br>   </pre></p><br>
 <h2><a name="require"><code>require: function(library_file_name: string, language_name?: string): Language, string</code></a></h2>
 <p>Search <code>package.cpath</code> for a parser with the filename <code>library_file_name.so</code> or <code>parsers/library_file_name.so</code> (or <code>.dll</code> on Windows) and try to load the symbol <code>tree_sitter_'language_name'</code><br>   <code>language_name</code> is optional and will be set to <code>library_file_name</code> if not provided.<br><br>   So if you want to load a Lua parser from a file named <code>lua.so</code> then use <code>ltreesitter.require("lua")</code><br>   But if you want to load a Lua parser from a file named <code>parser.so</code> then use <code>ltreesitter.require("parser", "lua")</code><br><br>   Like the regular <code>require</code>, this will error if the parser is not found or the symbol couldn't be loaded. Use either <code>pcall</code> or <code>ltreesitter.load</code> to not error out on failure.<br><br>   Returns the language and the path it was loaded from.<br><br>   <pre><br>   local my_language, loaded_from = ltreesitter.require("my_language")<br>   print(my_language:name(), loaded_from) -- "my_language", /home/user/.luarocks/lib/lua/5.4/parsers/my_language.so<br>   -- etc.<br>   </pre></p><br>
+<h2><a name="tree_sitter_version"><code>tree_sitter_version: string</code></a></h2>
+<p>The version of the tree-sitter library ltreesitter was built wit</p><br>
+<h2><a name="version"><code>version: string</code></a></h2>
+<p>The version of ltreesitte</p><br>
 <br>
 <h2><a name="Cursor.copy"><code>Cursor.copy: function(Cursor): Cursor</code></a></h2>
 <p>Create a copy of the given cursor</p><br>
@@ -360,16 +392,32 @@ h2 {
 <p>Sets the ranges that <code>Parser</code> will include when parsing, so you don't have to parse an entire document, but the ranges in the tree will still match the document.<br>   The array of <code>Range</code>s must satisfy the following relationship: for a positive integer <code>i</code> within the length of <code>ranges: {Range}</code>:<br>   <pre><br>   ranges[i].end_byte <= ranges[i + 1].start_byte<br>   </pre><br><br>   returns whether or not setting the range succeeded</p><br>
 <br>
 <h2><a name="Query.capture"><code>Query.capture: function(Query, Node, predicates?: {string:Predicate}, start?: integer | Point, end_?: integer | Point): function(): (Node, string)</code></a></h2>
-<p>Iterate over the captures of a given query in <code>Node</code>, <code>name</code> pairs.<br>   <code>start</code> and <code>end</code> are optional.<br>   They must be passed together with the same type, describing either two bytes or two points.<br>   If passed, the query will be executed within the range denoted.<br>   If not passed, the default behaviour is to execute the query through the entire range of the node.<br><br>   <pre><br>   local q = parser:query[[ (comment) @my_match ]]<br>   for capture, name in q:capture(node) do<br>      print(capture, name) -- => (comment), "my_match"<br>   end<br>   </pre></p><br>
+<p>Iterate over the captures of a given query in <code>Node</code>, <code>name</code> pairs.<br>   <code>start</code> and <code>end</code> are optional.<br>   They must be passed together with the same type, describing either two bytes or two points.<br>   If passed, the query will be executed within the range denoted.<br>   If not passed, the default behaviour is to execute the query through the entire range of the node.<br><br>   <pre><br>   local q = parser:query[[ (comment) @my_match</p><br>
 <h2><a name="Query.cursor"><code>Query.cursor: function(Query, Node): QueryCursor</code></a></h2>
-<p></p><br>
+<p>Create a query cursor from the given query, executing over the given node.</p><br>
 <h2><a name="Query.exec"><code>Query.exec: function(Query, Node, predicates?: {string:Predicate}, start?: integer | Point, end_?: integer | Point)</code></a></h2>
-<p>Runs a query. That's it. Nothing more, nothing less.<br>   This is intended to be used with the <code>Query.with</code> method and predicates that have side effects,<br>   i.e. for when you would use Query.match or Query.capture, but do nothing in the for loop.<br>   <code>start</code> and <code>end</code> are optional.<br>   They must be passed together with the same type, describing either two bytes or two points.<br>   If passed, the query will be executed within the range denoted.<br>   If not passed, the default behaviour is to execute the query through the entire range of the node.<br><br>   <pre><br>   local parser = ltreesitter.require("teal"):parser()<br><br>   -- grab a node to query against<br>   local root_node = parser:parse_string[[<br>   local x: string = "foo"<br>   local y: string = "bar"<br>   ]]:root()<br><br>   parser<br>      :query[[(<br>         (var_declaration<br>            (var) @var-name<br>            (string) @value)<br>         (#set! @var-name @value)<br>      )]]<br>      :exec(root_node, {["set!"] = function(a, b) _G[a] = b:sub(2, -2) end})<br><br>   print(x) -- => foo<br>   print(y) -- => bar<br><br>   </pre><br><br>   If you'd like to interact with the matches/captures of a query, see the Query.match and Query.capture iterators</p><br>
+<p>Runs a query. That's it. Nothing more, nothing less.<br>   This is intended to be used with the <code>Query.with</code> method and predicates that have side effects,<br>   i.e. for when you would use Query.match or Query.capture, but do nothing in the for loop.<br>   <code>start</code> and <code>end</code> are optional.<br>   They must be passed together with the same type, describing either two bytes or two points.<br>   If passed, the query will be executed within the range denoted.<br>   If not passed, the default behaviour is to execute the query through the entire range of the node.<br><br>   <pre><br>   local parser = ltreesitter.require("teal"):parser()<br><br>   -- grab a node to query against<br>   local root_node = parser:parse_string[[<br>   local x: string = "foo"<br>   local y: string = "bar"</p><br>
 <h2><a name="Query.match"><code>Query.match: function(Query, Node, predicates?: {string:Predicate}, start?: integer | Point, end_?: integer | Point): function(): Match</code></a></h2>
-<p>Iterate over the matches of a given query.<br>   <code>start</code> and <code>end</code> are optional.<br>   They must be passed together with the same type, describing either two bytes or two points.<br>   If passed, the query will be executed within the range denoted.<br>   If not passed, the default behaviour is to execute the query through the entire range of the node.<br><br>   The match object is a record populated with all the information given by treesitter<br>   <pre><br>   interface Match<br>      id: integer<br>      pattern_index: integer<br>      capture_count: integer<br>      captures: {string:Node|{Node}}<br>   end<br>   </pre><br><br>   If a capture can only contain at most one node (as is the case with regular <code>(node) @capture-name</code> patterns and <code>(node)? @capture-name</code> patterns),<br>   it will either be <code>nil</code> or that <code>Node</code>.<br><br>   If a capture can contain multiple nodes (as is the case with <code>(node)* @capture-name</code> and <code>(node)+ @capture-name</code> patterns)<br>   it will either be <code>nil</code> or an array of <code>Node</code><br><br>   Example:<br>   <pre><br>   local q = parser:query[[ (comment) @my_match ]]<br>   for match in q:match(node) do<br>      print(match.captures.my_match)<br>   end<br>   </pre><br><br>   <code>predicates</code> is a map of functions to determine whether a query matches and/or execute side effects<br><br>   Predicates that end in a <code>'?'</code> character will be seen as conditions that must be met for the pattern to be matched.<br>   Predicates that don't will be seen just as functions to be executed given the matches provided.<br><br>   Additionally, you will not have access to the return values of these functions, if you'd like to keep the results of a computation, make your functions have side-effects to write somewhere you can access.<br><br>   By default the following predicates are provided.<br>      <code> (#eq? ...) </code> will match if all arguments provided are equal<br>      <code> (#match? text pattern) </code> will match the provided <code>text</code> matches the given <code>pattern</code>. Matches are determined by Lua's standard <code>string.match</code> function.<br>      <code> (#find? text substring) </code> will match if <code>text</code> contains <code>substring</code>. The substring is found with Lua's standard <code>string.find</code>, but the search always starts from the beginning, and pattern matching is disabled. This is equivalent to <code>string.find(text, substring, 0, true)</code><br><br>   Predicate evaluation order:<br><br>      Since predicates that end with a `?` affect whether a node matches, these are run first, in the order they appear in the query's source. Once all `?` queries are run, all the non-`?` queries are run in the order they appear in the query's source.<br><br>   Example:<br>   The following snippet will match lua functions that have a single LDoc/EmmyLua style comment above them<br>   <pre><br>   local parser = ltreesitter.require("lua"):parser()<br><br>   -- grab a node to query against<br>   local root_node = parser:parse_string[[<br>      ---@Doc this does stuff<br>      local function stuff_doer()<br>         do_stuff()<br>      end<br>   ]]:root()<br><br>   for match in parser<br>      :query[[(<br>         (comment) @the-comment<br>         .<br>         (function_definition<br>            (function_name) @the-function-name)<br>         (#is-doc-comment? @the-comment)<br>      )]]<br>      :match(root_node, {<br>         ["is-doc-comment?"] = function(str)<br>            return str:source():sub(1, 4) == "---@"<br>         end<br>      })<br>   do<br>      print("Function: " .. match.captures["the-function-name"] .. " has documentation")<br>      print("   " .. match.captures["the-comment"])<br>   end<br>   </pre></p><br>
+<p>Iterate over the matches of a given query.<br>   <code>start</code> and <code>end</code> are optional.<br>   They must be passed together with the same type, describing either two bytes or two points.<br>   If passed, the query will be executed within the range denoted.<br>   If not passed, the default behaviour is to execute the query through the entire range of the node.<br><br>   The match object is a record populated with all the information given by treesitter<br>   <pre><br>   interface Match<br>      id: integer<br>      pattern_index: integer<br>      capture_count: integer<br>      captures: {string:Node|{Node}}<br>   end<br>   </pre><br><br>   If a capture can only contain at most one node (as is the case with regular <code>(node) @capture-name</code> patterns and <code>(node)? @capture-name</code> patterns),<br>   it will either be <code>nil</code> or that <code>Node</code>.<br><br>   If a capture can contain multiple nodes (as is the case with <code>(node)* @capture-name</code> and <code>(node)+ @capture-name</code> patterns)<br>   it will either be <code>nil</code> or an array of <code>Node</code><br><br>   Example:<br>   <pre><br>   local q = parser:query[[ (comment) @my_match</p><br>
+<h2><a name="Query.predicates_for_pattern"><code>Query.predicates_for_pattern: function(Query, pattern_index: integer): {{string | Capture}}</code></a></h2>
+<p>=[<br>   Given a pattern index, return an array representing each predicate<br><br>   Each predicate is an array of either strings, representing literal strings<br>   in the predicate, or a table with a `capture_name` field, representing a<br>   `@capture` in the predicate.<br><br>   e.g. Given a (c) query like with source:<br><br>   <code><br>      local q = c:query [[<br>        ((_ declarator: (identifier) @name)<br>         (#match? @name "[a-z]+")<br>         (#set! @name true))<br>      ]]<br>   </code><br><br>   <code>q:predicates_for_pattern(0)</code> would return:<br><br>   <code><br>      {<br>         { "match?", { capture_name = "name" }, "[a-z]+" },<br>         { "set!", { capture_name = "name" }, "true" },<br>      }<br>   </code></p><br>
 <br>
+<h2><a name="QueryCursor.did_exceed_match_limit"><code>QueryCursor.did_exceed_match_limit: function(QueryCursor): boolean</code></a></h2>
+<p>Returns true if the given cursor exceeded its match limit. See<br>   `set_match_limit` and `match_limit`</p><br>
+<h2><a name="QueryCursor.match_limit"><code>QueryCursor.match_limit: function(QueryCursor): integer</code></a></h2>
+<p>Get the match limit of the given cursor. See `set_match_limit` and<br>   `did_exceed_match_limit`</p><br>
+<h2><a name="QueryCursor.next_capture_without_executing_predicates"><code>QueryCursor.next_capture_without_executing_predicates: function(QueryCursor): Node, string</code></a></h2>
+<p>Find the next capture of the given cursor. As implied by the name, this does<br>   <em>NOT</em> execute any predicates. See `Query.predicates_for_pattern` or<br>   `Query.capture` for executing predicates.</p><br>
+<h2><a name="QueryCursor.next_match_without_executing_predicates"><code>QueryCursor.next_match_without_executing_predicates: function(QueryCursor): Match</code></a></h2>
+<p>Find the next match of the given cursor. As implied by the name, this does<br>   <em>NOT</em> execute any predicates. See `Query.predicates_for_pattern` or<br>   `Query.match` for executing predicates.</p><br>
+<h2><a name="QueryCursor.remove_match"><code>QueryCursor.remove_match: function(QueryCursor, match_id: integer)</code></a></h2>
+<p>Prevent the given query cursor from matching the given match id</p><br>
 <h2><a name="QueryCursor.set_byte_range"><code>QueryCursor.set_byte_range: function(QueryCursor, start: integer, end_: integer): boolean</code></a></h2>
 <p>returns true when the given range was non-empty</p><br>
+<h2><a name="QueryCursor.set_match_limit"><code>QueryCursor.set_match_limit: function(QueryCursor, integer)</code></a></h2>
+<p>Set the maximum number of in-progress matches allowed by this query cursor.<br><br>   Set to nil to set to the maximum limit (2^32-1)</p><br>
+<h2><a name="QueryCursor.set_max_start_depth"><code>QueryCursor.set_max_start_depth: function(QueryCursor, integer)</code></a></h2>
+<p>Set the maximum start depth of the given cursor. Set to nil to set the maximum.<br><br>   This prevents cursors from exploring children nodes at a certain depth.</p><br>
 <h2><a name="QueryCursor.set_point_range"><code>QueryCursor.set_point_range: function(QueryCursor, start: Point, end_: Point): boolean</code></a></h2>
 <p>returns true when the given range was non-empty</p><br>
 <br>

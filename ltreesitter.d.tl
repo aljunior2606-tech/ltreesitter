@@ -87,14 +87,14 @@ local record ltreesitter
       cursor: function(Query, Node): QueryCursor
       exec: function(Query, Node, predicates?: {string:Predicate}, start?: integer | Point, end_?: integer | Point)
       match: function(Query, Node, predicates?: {string:Predicate}, start?: integer | Point, end_?: integer | Point): function(): Match
-      predicates_for_pattern: function(Query, integer): {{string | Capture}}
+      predicates_for_pattern: function(Query, pattern_index: integer): {{string | Capture}}
    end
    record QueryCursor is userdata
       did_exceed_match_limit: function(QueryCursor): boolean
       match_limit: function(QueryCursor): integer
       next_capture_without_executing_predicates: function(QueryCursor): Node, string
       next_match_without_executing_predicates: function(QueryCursor): Match
-      remove_match: function(QueryCursor, integer)
+      remove_match: function(QueryCursor, match_id: integer)
       set_byte_range: function(QueryCursor, start: integer, end_: integer): boolean
       set_match_limit: function(QueryCursor, integer)
       set_max_start_depth: function(QueryCursor, integer)

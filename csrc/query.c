@@ -662,6 +662,7 @@ static int find_predicate(lua_State *L) {
 
 // TODO: exec_with_options
 /* @teal-export Query.cursor: function(Query, Node): QueryCursor [[
+   Create a query cursor from the given query, executing over the given node.
 ]] */
 static int make_cursor(lua_State *L) {
 	TSQuery *const q = *query_assert(L, 1);
@@ -689,7 +690,32 @@ static int make_cursor(lua_State *L) {
       capture_name: string
    end
 ]] */
-/* @teal-export Query.predicates_for_pattern: function(Query, integer): {{string | Capture}} */
+/* @teal-export Query.predicates_for_pattern: function(Query, pattern_index: integer): {{string | Capture}} [==[
+   Given a pattern index, return an array representing each predicate
+
+   Each predicate is an array of either strings, representing literal strings
+   in the predicate, or a table with a `capture_name` field, representing a
+   `@capture` in the predicate.
+
+   e.g. Given a (c) query like with source:
+
+   <code>
+      local q = c:query [[
+        ((_ declarator: (identifier) @name)
+         (#match? @name "[a-z]+")
+         (#set! @name true))
+      ]]
+   </code>
+
+   <code>q:predicates_for_pattern(0)</code> would return:
+
+   <code>
+      {
+         { "match?", { capture_name = "name" }, "[a-z]+" },
+         { "set!", { capture_name = "name" }, "true" },
+      }
+   </code>
+]==]*/
 static int predicates_for_pattern(lua_State *L) {
 	TSQuery const *const q = *query_assert(L, 1);
 	lua_Integer pattern_index = luaL_checkinteger(L, 2);

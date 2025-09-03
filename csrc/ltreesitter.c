@@ -11,7 +11,7 @@
 #include "tree.h"
 #include "tree_cursor.h"
 
-// @teal-export version: string
+// @teal-export version: string [[The version of ltreesitter]]
 static const char version_str[] = "0.2.0+dev";
 
 static const luaL_Reg lib_funcs[] = {
@@ -51,15 +51,15 @@ int luaopen_ltreesitter(lua_State *L) {
 	lua_pushstring(L, version_str);
 	lua_setfield(L, -2, "version");
 
-	// @teal-export TREE_SITTER_LANGUAGE_VERSION: integer
+	// @teal-export TREE_SITTER_LANGUAGE_VERSION: integer [[The current language ABI version supported by the used version of tree-sitter]]
 	lua_pushinteger(L, TREE_SITTER_LANGUAGE_VERSION);
 	lua_setfield(L, -2, "TREE_SITTER_LANGUAGE_VERSION");
 
-	// @teal-export TREE_SITTER_MIN_COMPATIBLE_LANGUAGE_VERSION: integer
+	// @teal-export TREE_SITTER_MIN_COMPATIBLE_LANGUAGE_VERSION: integer [[The minimum language ABI version supported by the used version of tree-sitter]]
 	lua_pushinteger(L, TREE_SITTER_MIN_COMPATIBLE_LANGUAGE_VERSION);
 	lua_setfield(L, -2, "TREE_SITTER_MIN_COMPATIBLE_LANGUAGE_VERSION");
 
-	// @teal-export tree_sitter_version: string
+	// @teal-export tree_sitter_version: string [[The version of the tree-sitter library ltreesitter was built with]]
 	lua_pushstring(L, "0.25.8");
 	lua_setfield(L, -2, "tree_sitter_version");
 
