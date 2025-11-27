@@ -74,7 +74,7 @@ void setup_registry_index(lua_State *L);
 int push_registry_table(lua_State *L);
 void push_registry_field(lua_State *L, char const *f);
 void set_registry_field(lua_State *L, char const *f);
-void newtable_with_mode(lua_State *L, char const *mode);
+void newtable_with_mode(lua_State *L, bool weak_keys, bool weak_values);
 size_t length_of(lua_State *L, int index);
 
 bool push_ref_from_registry(lua_State *, int ref);

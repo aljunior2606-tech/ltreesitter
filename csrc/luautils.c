@@ -190,10 +190,11 @@ void set_registry_field(lua_State *L, char const *f) {
 	lua_pop(L, 1);
 }
 
-void newtable_with_mode(lua_State *L, char const *mode) {
+void newtable_with_mode(lua_State *L, bool weak_keys, bool weak_values) {
 	lua_newtable(L);
 	lua_newtable(L); // {}, {}
-	lua_pushstring(L, mode);
+	static char const *modes[] = { "", "k", "v", "kv" };
+	lua_pushstring(L, modes[weak_keys + (weak_values << 1)]);
 	lua_setfield(L, -2, "__mode"); // {}, { __mode = mode }
 	lua_setmetatable(L, -2);       // { <metatable> = { __mode = mode } }
 }

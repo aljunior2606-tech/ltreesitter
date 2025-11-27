@@ -19,7 +19,7 @@
 #define dynlib_registry_field "dynlibs"
 
 void setup_dynlib_cache(lua_State *L) {
-	newtable_with_mode(L, "v");
+	newtable_with_mode(L, false, true);
 	set_registry_field(L, dynlib_registry_field);
 }
 

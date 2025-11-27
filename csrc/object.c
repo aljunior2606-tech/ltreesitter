@@ -5,7 +5,7 @@ static char const *object_field = "objects";
 // map of objects to their parents
 // use when an object relies on its parent being alive
 void setup_object_table(lua_State *L) {
-	newtable_with_mode(L, "k");
+	newtable_with_mode(L, true, false);
 	set_registry_field(L, object_field);
 }
 
