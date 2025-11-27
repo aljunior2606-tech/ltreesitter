@@ -151,7 +151,10 @@ local predicates = {
 	["check-cast!"] = function(name_node, cast)
 		local name = name_node:source()
 		if not allocation_functions[name] then return end
-		report(cast:start_point(), "Don't cast ‘", name, "’ in C. If the proper header isn't included the resulting behavior is undefined and casting may silence that warning")
+		report(
+			cast:start_point(),
+			"Don't cast ‘", name, "’ in C. If the proper header isn't included it is assumed to return ‘int’ which will truncate the resulting pointer, causing undefined behavior"
+		)
 	end,
 
 	["check-reserved-function-name!"] = function(name_node)
