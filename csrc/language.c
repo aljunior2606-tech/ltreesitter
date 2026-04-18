@@ -178,7 +178,7 @@ static bool try_load_from_path(
 		}
 	}
 
-	uint32_t const version = ts_language_version(lang);
+	uint32_t const version = ts_language_abi_version(lang);
 	if (version < TREE_SITTER_MIN_COMPATIBLE_LANGUAGE_VERSION) {
 		if (should_cache_dl)
 			dynlib_close(&dl);
