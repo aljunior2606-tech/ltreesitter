@@ -25,7 +25,11 @@ bool sb_ensure_cap(StringBuilder *sb, size_t n);
 bool sb_push_char(StringBuilder *sb, char);
 bool sb_push_str(StringBuilder *sb, char const *str);
 bool sb_push_lstr(StringBuilder *sb, size_t len, char const *str);
-bool sb_push_fmt(StringBuilder *sb, char const *fmt, ...);
+bool sb_push_fmt(StringBuilder *sb, char const *fmt, ...)
+#if defined __GNUC__ || defined __clang__
+	__attribute__ ((format(printf, 2, 3)))
+#endif
+	;
 void sb_push_to_lua(lua_State *L, StringBuilder *sb);
 void sb_free(StringBuilder *sb);
 
