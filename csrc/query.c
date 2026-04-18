@@ -452,7 +452,7 @@ static int query_match_factory(lua_State *L) {
 	return 1;
 }
 
-/* @teal-export Query.capture: function(Query, Node, predicates?: {string:Predicate}, start?: integer | Point, end_?: integer | Point): function(): (Node, string) [[
+/* @teal-export Query.capture: function(Query, Node, predicates?: {string:Predicate}, start?: integer | Point, end_?: integer | Point): function(): (Node, string) [===[
    Iterate over the captures of a given query in <code>Node</code>, <code>name</code> pairs.
    <code>start</code> and <code>end</code> are optional.
    They must be passed together with the same type, describing either two bytes or two points.
@@ -465,7 +465,7 @@ static int query_match_factory(lua_State *L) {
       print(capture, name) -- => (comment), "my_match"
    end
    </pre>
-]]*/
+]===]*/
 static int query_capture_factory(lua_State *L) {
 	TSQuery *const q = *query_assert(L, 1);
 	TSNode n = *node_assert(L, 2);
@@ -485,7 +485,7 @@ static int query_capture_factory(lua_State *L) {
    type Predicate = function(...: string | Node | {Node}): any...
 ]] */
 
-/* @teal-export Query.exec: function(Query, Node, predicates?: {string:Predicate}, start?: integer | Point, end_?: integer | Point) [[
+/* @teal-export Query.exec: function(Query, Node, predicates?: {string:Predicate}, start?: integer | Point, end_?: integer | Point) [===[
    Runs a query. That's it. Nothing more, nothing less.
    This is intended to be used with the <code>Query.with</code> method and predicates that have side effects,
    i.e. for when you would use Query.match or Query.capture, but do nothing in the for loop.
@@ -518,7 +518,7 @@ static int query_capture_factory(lua_State *L) {
    </pre>
 
    If you'd like to interact with the matches/captures of a query, see the Query.match and Query.capture iterators
-]]*/
+]===]*/
 static int query_exec(lua_State *L) {
 	TSQuery *const q = *query_assert(L, 1);
 	TSNode n = *node_assert(L, 2);

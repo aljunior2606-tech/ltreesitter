@@ -115,7 +115,6 @@ local directives: {string:function(ts.Node, string, string)} = {
          if documentation then
             insert_into(docs, name, "<" .. typedef .. ">" .. trim(documentation))
          end
-         typedef = typedef
          insert_into(records, name, typedef)
       end
    end,
